@@ -15,6 +15,6 @@ dependencies:
     github: aramvisser/blend2d.cr
   sdl:
     github: avrame/sdl.cr
-    commit: cba7e19c4f471231d06fb8ef0f464515e6831164
+    branch: add_alloc_format
 
 license: MIT

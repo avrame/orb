@@ -3,13 +3,14 @@ require "sdl"
 
 module Orb
   VERSION = "0.1.0"
-  PIXEL_FORMAT = SDL.alloc_format(LibSDL::PixelFormatEnum::RGB888)
+  PIXEL_FORMAT = SDL.alloc_format(LibSDL::PixelFormatEnum::ARGB8888)
 
   SDL.init(SDL::Init::VIDEO)
   at_exit { SDL.quit }
 
-  window = SDL::Window.new("SDL Tutorial", 640, 480)
+  window = SDL::Window.new("SDL Tutorial", 800, 600)
   renderer = SDL::Renderer.new(window)
+  frame = 0
 
   loop do
     case event = SDL::Event.wait
@@ -18,8 +19,9 @@ module Orb
     end
 
     renderer.clear
-    renderer.copy(draw_image)
+    renderer.copy(draw_image(window, frame))
     renderer.present
+    frame += 1
   end
 
   def self.uint32_slice_to_uint8_slice(slice : Slice(UInt32)) : Slice(UInt8)
@@ -33,8 +35,8 @@ module Orb
     result
   end
 
-  def self.draw_image
-    img = Blend2D::Image.new 800, 600
+  def self.draw_image(window, frame)
+    img = Blend2D::Image.new window.width, window.height
     ctx = Blend2D::Context.new img
 
     ctx.fill_all
@@ -59,22 +61,11 @@ module Orb
     ctx.fill_style = 0xFFFFFFFF_u32
     ctx.fill_text({60, 80}, font, "Hello Blend2D")
 
-    # ctx.rotate speed * Math::PI / 180.0
+    ctx.rotate frame * Math::PI / 180.0
     ctx.fill_text Blend2D::Point.new(250, 80), font, "Rotated Text"
 
     ctx.end
-    # img.write_to_file "#{__DIR__}/composition.png"
 
-    pixel_data = img.data.pixel_data
-    pixel_data_bytes = Slice(UInt8).new(4 * pixel_data.size)
-    pixel_data.each_with_index do |pixel, i|
-      bytes = uninitialized UInt8[4]
-      IO::ByteFormat::LittleEndian.encode(pixel, bytes.to_slice)
-      pixel_data_bytes[i * 4] = bytes[0]
-      pixel_data_bytes[i * 4 + 1] = bytes[1]
-      pixel_data_bytes[i * 4 + 2] = bytes[2]
-      pixel_data_bytes[i * 4 + 3] = bytes[3]
-    end
-    SDL::Surface.from(pixel_data_bytes, 800, 600, PIXEL_FORMAT)
+    SDL::Surface.from(img.data.pixel_data, window.width, window.height, PIXEL_FORMAT)
   end
 end

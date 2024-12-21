@@ -6,5 +6,5 @@ shards:
 
   sdl:
     git: https://github.com/avrame/sdl.cr.git
-    version: 0.1.0+git.commit.cba7e19c4f471231d06fb8ef0f464515e6831164
+    version: 0.1.0+git.commit.c692c083b02f5521bc4512f26f7f14fab045a81c
 
