@@ -1,0 +1,10 @@
+version: 2.0
+shards:
+  blend2d:
+    git: https://github.com/aramvisser/blend2d.cr.git
+    version: 0.0.1+git.commit.9c39ce5b9ab03e60b5200f1ce633bde1c2d48e26
+
+  sdl:
+    git: https://github.com/avrame/sdl.cr.git
+    version: 0.1.0+git.commit.cba7e19c4f471231d06fb8ef0f464515e6831164
+

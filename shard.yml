@@ -1,0 +1,20 @@
+name: orb
+version: 0.1.0
+
+authors:
+  - Avram Eisner <avrame@gmail.com>
+
+targets:
+  orb:
+    main: src/orb.cr
+
+crystal: '>= 1.14.0'
+
+dependencies:
+  blend2d:
+    github: aramvisser/blend2d.cr
+  sdl:
+    github: avrame/sdl.cr
+    commit: cba7e19c4f471231d06fb8ef0f464515e6831164
+
+license: MIT
