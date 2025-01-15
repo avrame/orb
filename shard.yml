@@ -8,7 +8,7 @@ targets:
   orb:
     main: src/orb.cr
 
-crystal: '>= 1.14.0'
+crystal: ">= 1.14.0"
 
 dependencies:
   blend2d:

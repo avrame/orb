@@ -2,43 +2,32 @@ require "blend2d"
 require "sdl"
 
 module Orb
-  VERSION = "0.1.0"
+  VERSION      = "0.1.0"
   PIXEL_FORMAT = SDL.alloc_format(LibSDL::PixelFormatEnum::ARGB8888)
 
-  SDL.init(SDL::Init::VIDEO)
+  SDL.init(SDL::Init::VIDEO | SDL::Init::TIMER)
   at_exit { SDL.quit }
 
-  window = SDL::Window.new("SDL Tutorial", 800, 600)
+  window = SDL::Window.new("SDL Tutorial", 1024, 800)
   renderer = SDL::Renderer.new(window)
-  frame = 0
+  img = Blend2D::Image.new window.width, window.height
 
   loop do
-    case event = SDL::Event.wait
+    ticks = SDL.get_ticks_64
+
+    case event = SDL::Event.poll
     when SDL::Event::Quit
       break
     end
 
     renderer.clear
-    renderer.copy(draw_image(window, frame))
+    surface = create_surface(window, img, ticks)
+    renderer.copy(SDL::Texture.from(surface, renderer))
     renderer.present
-    frame += 1
   end
 
-  def self.uint32_slice_to_uint8_slice(slice : Slice(UInt32)) : Slice(UInt8)
-    result = Slice(UInt8).new(slice.size * 4)
-    slice.each_with_index do |value, index|
-      result[index * 4] = (value >> 24) & 0xFF
-      result[index * 4 + 1] = (value >> 16) & 0xFF
-      result[index * 4 + 2] = (value >> 8) & 0xFF
-      result[index * 4 + 3] = value & 0xFF
-    end
-    result
-  end
-
-  def self.draw_image(window, frame)
-    img = Blend2D::Image.new window.width, window.height
+  def self.create_surface(window, img, ticks) : SDL::Surface
     ctx = Blend2D::Context.new img
-
     ctx.fill_all
 
     radial_gradient = Blend2D::Gradient.radial 180, 180, 180, 180, 180
@@ -61,7 +50,7 @@ module Orb
     ctx.fill_style = 0xFFFFFFFF_u32
     ctx.fill_text({60, 80}, font, "Hello Blend2D")
 
-    ctx.rotate frame * Math::PI / 180.0
+    ctx.rotate (ticks / 20) * Math::PI / 180.0, 350, 80
     ctx.fill_text Blend2D::Point.new(250, 80), font, "Rotated Text"
 
     ctx.end
