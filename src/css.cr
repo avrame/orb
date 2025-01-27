@@ -48,7 +48,7 @@ module Orb
   class Keyword
     property keyword : String
 
-    def initiailze(@keyword)
+    def initialize(@keyword)
     end
   end
 
@@ -69,12 +69,12 @@ module Orb
   class ColorValue
     property color : Color
 
-    def initiailize(@color)
+    def initialize(@color)
     end
   end
 
   class Color
-    property r : Uint8
+    property r : UInt8
     property g : UInt8
     property b : UInt8
     property a : UInt8

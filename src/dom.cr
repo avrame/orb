@@ -1,3 +1,5 @@
+require "./css.cr"
+
 module Orb
   alias AttrMap = Hash(String, String)
 
@@ -18,6 +20,19 @@ module Orb
     property children : Array(Node)
 
     def initialize(@tag_name : String, @attrs : AttrMap, @children : Array(Node))
+    end
+
+    def id : String
+      @attrs["id"]
+    end
+
+    def classes : Set
+      classes = @attrs["class"]?
+      if classes
+        Set.new classes.split(" ").map &.strip
+      else
+        Set.new
+      end
     end
   end
 end
