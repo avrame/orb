@@ -4,6 +4,11 @@ require "./css.cr"
 module Orb
   alias PropertyMap = Hash(String, Value)
   alias MatchedRule = Tuple(Specificity, Rule)
+  enum Display
+    Inline
+    Block
+    None
+  end
 
   class StyledNode
     property node : Node
@@ -11,6 +16,21 @@ module Orb
     property children : Array(StyledNode)
 
     def initialize(@node, @specified_values, @children)
+    end
+
+    def value(name : String) : Value?
+      specified_values[name]
+    end
+
+    def display : Display
+      case value("display")
+      when "block"
+        Display::Block
+      when "none"
+        Display::None
+      else
+        Display::Inline
+      end
     end
   end
 
