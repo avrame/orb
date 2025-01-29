@@ -22,6 +22,10 @@ module Orb
       specified_values[name]
     end
 
+    def lookup(name : String, fallback_name : String, default : Value) : Value
+      value(name) || value(fallback_name) || default
+    end
+
     def display : Display
       case value("display")
       when "block"
