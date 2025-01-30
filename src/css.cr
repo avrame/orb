@@ -33,6 +33,10 @@ module Orb
 
     def initialize(@tag_name, @id, @klass)
     end
+
+    def to_s
+      "tag: #{@tag_name}, id: #{@id}, klass: #{@klass.join(".")}"
+    end
   end
 
   class Declaration
@@ -40,6 +44,10 @@ module Orb
     property value : Value
 
     def initialize(@name, @value)
+    end
+
+    def to_s
+      "#{@name}: #{@value.to_s}"
     end
   end
 
@@ -50,13 +58,29 @@ module Orb
 
     def initialize(@keyword)
     end
+
+    def to_px
+      0.0
+    end
+
+    def to_s
+      @keyword
+    end
   end
 
   class Length
-    property length : Float32
+    property length : Float64
     property unit : Unit
 
     def initialize(@length, @unit)
+    end
+
+    def to_px
+      @length
+    end
+
+    def to_s
+      "#{@length}#{@unit}"
     end
   end
 
@@ -71,6 +95,14 @@ module Orb
 
     def initialize(@color)
     end
+
+    def to_px
+      0.0
+    end
+
+    def to_s
+      @color.to_s
+    end
   end
 
   class Color
@@ -80,6 +112,10 @@ module Orb
     property a : UInt8
 
     def initialize(@r, @g, @b, @a = 255)
+    end
+
+    def to_s
+      "rgba(#{@r}, #{@g}, #{@b}, #{@a})"
     end
   end
 end

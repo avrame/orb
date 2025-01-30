@@ -13,7 +13,7 @@ module Orb
       char
     end
 
-    def consume_while(&block) : String
+    def consume_while(&block : Char -> Bool) : String
       String.build do |str|
         while !eof && yield next_char
           str << consume_char
@@ -38,6 +38,14 @@ module Orb
         @pos += str.size
       else
         raise Exception.new "Expected #{str} at byte #{@pos} but it was not found"
+      end
+    end
+
+    def expect_char(char : Char)
+      if next_char == char
+        consume_char
+      else
+        raise Exception.new "Expected #{char} at byte #{@pos} but it was not found"
       end
     end
 

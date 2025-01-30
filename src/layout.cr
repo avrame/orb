@@ -1,7 +1,43 @@
 require "./css.cr"
 
 module Orb
+  # Transform a style tree into a layout tree.
+  def self.layout_tree(style_node : StyledNode, containing_block : Dimensions) : LayoutBox
+    # The layout algorithm expects the container height to start at 0.
+    # TODO: Save the initial containing block height, for calculating percent heights.
+    containing_block.content.height = 0
+
+    root_box = build_layout_tree(style_node)
+    root_box.layout(containing_block)
+    root_box
+  end
+
   # CSS box model. All sizes are in px.
+  def self.build_layout_tree(style_node : StyledNode) : LayoutBox
+    box_type = case style_node.display
+               in .block?
+                 BlockNode.new(style_node)
+               in .inline?
+                 InlineNode.new(style_node)
+               in .none?
+                 raise Exception.new "Root node has display: none."
+               end
+
+    root = LayoutBox.new(box_type)
+
+    style_node.children.each do |child|
+      case child.display
+      in .block?
+        root.children << build_layout_tree(child)
+      in .inline?
+        root.get_inline_container.children << build_layout_tree(child)
+      in .none?
+        # Skip nodes with `display: none;`
+      end
+    end
+
+    root
+  end
 
   class Dimensions
     property content : Rect
@@ -12,7 +48,7 @@ module Orb
     def initialize(@content, @padding, @border, @margin)
     end
 
-    def initialize
+    def self.default : Dimensions
       Dimensions.new(
         Rect.new(0, 0, 0, 0),
         EdgeSizes.new(0, 0, 0, 0),
@@ -32,13 +68,17 @@ module Orb
     def margin_box : Rect
       border_box().expanded_by(@margin)
     end
+
+    def to_s
+      "content: #{@content.to_s}, padding: #{@padding.to_s}, border: #{@border.to_s}, margin: #{@margin.to_s}"
+    end
   end
 
   class Rect
-    property x : Float32
-    property y : Float32
-    property width : Float32
-    property height : Float32
+    property x : Float64
+    property y : Float64
+    property width : Float64
+    property height : Float64
 
     def initialize(@x, @y, @width, @height)
     end
@@ -49,17 +89,25 @@ module Orb
         @y - edge.top,
         @width + edge.left + edge.right,
         @height + edge.top + edge.bottom
-      
-    end  )
+      )
+    end
+
+    def to_s
+      "x: #{@x}, y: #{@y}, width: #{@width}, height: #{@height}"
+    end
   end
 
   class EdgeSizes
-    property left : Float32
-    property right : Float32
-    property top : Float32
-    property bottom : Float32
+    property left : Float64
+    property right : Float64
+    property top : Float64
+    property bottom : Float64
 
     def initialize(@left, @right, @top, @bottom)
+    end
+
+    def to_s
+      "left: #{@left}, right: #{@right}, top: #{@top}, bottom: #{@bottom}"
     end
   end
 
@@ -68,12 +116,13 @@ module Orb
     property box_type : BoxType
     property children = [] of LayoutBox
 
-    def initialize(@box_type, @styled_node)
-      @dimensions = Dimensiones.new
+    def initialize(@box_type)
+      @dimensions = Dimensions.default
     end
 
     def get_style_node : StyledNode
-      case @box_type
+      box_type = @box_type
+      case box_type
       in BlockNode, InlineNode
         box_type.styled_node
       in AnonymousBlock
@@ -132,7 +181,7 @@ module Orb
       margin_right = style.lookup("margin-right", "margin", zero)
 
       border_left = style.lookup("border-left-width", "border-width", zero)
-      border_left = style.lookup("border-right-width", "border-width", zero)
+      border_right = style.lookup("border-right-width", "border-width", zero)
 
       padding_left = style.lookup("padding-left", "padding", zero)
       padding_right = style.lookup("padding-right", "padding", zero)
@@ -156,19 +205,19 @@ module Orb
 
       underflow = containing_block.content.width - total
 
-      case (width == auto, margin_left == auto, margin_right == auto)
+      case {width == auto, margin_left == auto, margin_right == auto}
       # If the values are overconstrained, calculate margin_right.
-      when (false, false, false)
+      in {false, false, false}
         margin_right = Length.new(margin_right.to_px + underflow, Unit::Px)
 
       # If exactly one size is auto, its used value follows from the equality.
-      when (false, false, true)
+      in {false, false, true}
         margin_right = Length.new(underflow, Unit::Px)
-      when (false, true, true)
+      in {false, true, false}
         margin_left = Length.new(underflow, Unit::Px)
       
       # If width is set to auto, any other auto values become 0.
-      when (true, _, _)
+      in {true, _, _}
         if margin_left == auto
           margin_left = Length.new(0.0, Unit::Px)
         end
@@ -178,17 +227,26 @@ module Orb
 
         if underflow >= 0.0
           # Expand width to fill the underflow.
-          width = Length.new(underflow, Unit.Px)
+          width = Length.new(underflow, Unit::Px)
         else
           # Width can't be negative. Adjust the right margin instead.
           width = Length.new(0.0, Unit::Px)
           margin_right = Length.new(margin_right.to_px + underflow, Unit::Px)
         end
       # If margin-left and margin-right are both auto, their used values are equal.
-      when (false, true, true)
+      in {false, true, true}
         margin_left = Length.new(underflow / 2.0, Unit::Px)
         margin_right = Length.new(underflow / 2.0, Unit::Px)
       end
+
+      d = @dimensions
+      d.content.width = width.to_px
+
+      d.padding.left = padding_left.to_px
+      d.padding.right = padding_right.to_px
+
+      d.margin.left = margin_left.to_px
+      d.margin.right = margin_right.to_px
     end
 
     def calculate_block_position(containing_block : Dimensions)
@@ -251,30 +309,6 @@ module Orb
 
   class AnonymousBlock
     def initialize
-    end
-  end
-
-  def build_layout_tree(style_node : StyledNode) : LayoutBox
-    box_type = case style_node.display
-               in .block?
-                 BlockNode.new(style_node)
-               in .inline?
-                 InlineNode.new(style_node)
-               in .none?
-                 raise Exception.new "Root node has display: nonw."
-               end
-
-    root = LayoutBox.new(box_type)
-
-    style_node.children.each do |child|
-      case child.display
-      in .block?
-        root.children << build_layout_tree(child)
-      in .inline?
-        root.get_inline_container.children << build_layout_tree(child)
-      in .none?
-        # Skip nodes with `display: none;`
-      end
     end
   end
 end

@@ -22,16 +22,16 @@ module Orb
     def initialize(@tag_name : String, @attrs : AttrMap, @children : Array(Node))
     end
 
-    def id : String
-      @attrs["id"]
+    def id : String?
+      @attrs["id"]?
     end
 
-    def classes : Set
+    def classes : Set(String)
       classes = @attrs["class"]?
       if classes
         Set.new classes.split(" ").map &.strip
       else
-        Set.new
+        Set(String).new
       end
     end
   end
