@@ -8,17 +8,18 @@ module Orb
   alias DisplayCommand = PaintRect | RenderText # insert other commands here
 
   class PaintRect
-    property color : Color
+    property bg_color : Color?
+    property border_color : Color?
     property rect : Rect
 
-    def initialize(@color : Color, @rect : Rect)
+    def initialize(@bg_color, @border_color, @rect)
     end
   end
 
   class PaintRoundedRect < PaintRect
     property radius : Float32
 
-    def initialize(@color : Color, @rect : Rect, @radius : Float32)
+    def initialize(@bg_color, @border_color, @rect, @radius)
     end
   end
 
@@ -47,8 +48,9 @@ module Orb
 
   def self.render_layout_box(list : DisplayList, layout_box : LayoutBox)
     bg_color = get_color(layout_box, "background-color")
+    border_color = get_color(layout_box, "border-color")
     if bg_color
-      list << PaintRect.new(bg_color, layout_box.dimensions.border_box)
+      list << PaintRect.new(bg_color, border_color, layout_box.dimensions.border_box)
     end
     layout_box.children.each do |child|
       render_layout_box(list, child)
@@ -67,8 +69,18 @@ module Orb
   end
 
   def self.paint_rect(window : SDL::Window, ctx : Blend2D::Context, item : PaintRect)
-    bg_color = item.color
-    ctx.fill_style = Blend2D::Styling::RGBA32.new(bg_color.r, bg_color.g, bg_color.b, bg_color.a)
+    bg_color = item.bg_color
+    border_color = item.border_color
+    if bg_color
+      ctx.fill_style = Blend2D::Styling::RGBA32.new(bg_color.r, bg_color.g, bg_color.b, bg_color.a)
+    else
+      ctx.fill_style = Blend2D::Styling::RGBA32.new(0, 0, 0, 0)
+    end
+    if border_color
+      ctx.stroke_style = Blend2D::Styling::RGBA32.new(border_color.r, border_color.g, border_color.b, border_color.a)
+    else
+      ctx.stroke_style = Blend2D::Styling::RGBA32.new(0, 0, 0, 0)
+    end
     x = item.rect.x.clamp(0, window.width).to_f64
     y = item.rect.y.clamp(0, window.height).to_f64
     width = item.rect.width.clamp(0, window.width - x).to_f64

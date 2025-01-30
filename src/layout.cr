@@ -70,7 +70,7 @@ module Orb
     end
 
     def to_s
-      "content: #{@content.to_s}, padding: #{@padding.to_s}, border: #{@border.to_s}, margin: #{@margin.to_s}"
+      "\n    content: #{@content.to_s}\n    padding: #{@padding.to_s}\n    border: #{@border.to_s}\n    margin: #{@margin.to_s}"
     end
   end
 
@@ -88,7 +88,7 @@ module Orb
         @x - edge.left,
         @y - edge.top,
         @width + edge.left + edge.right,
-        @height + edge.top + edge.bottom
+        @height + edge.top + edge.bottom,
       )
     end
 
@@ -269,8 +269,7 @@ module Orb
       d.content.x = containing_block.content.x + d.margin.left + d.border.left + d.padding.left
 
       # Position the box below all the previous boxes in the container.
-      d.content.y = containing_block.content.height + containing_block.content.y
-        + d.margin.top + d.border.top + d.padding.top
+      d.content.y = containing_block.content.height + containing_block.content.y + d.margin.top + d.border.top + d.padding.top
     end
 
     def layout_block_children
