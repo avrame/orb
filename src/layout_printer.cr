@@ -15,6 +15,9 @@ module Orb
         node = box_type.styled_node.node
         if node.is_a?(Elem)
           puts "LayoutBox: #{node.tag_name}"
+          box_type.styled_node.specified_values.each do |key, value|
+            puts "  #{key}: #{value.to_s}"
+          end
           puts "  dimensions: #{layout_box.dimensions.to_s}"
         end
       end
